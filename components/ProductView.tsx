@@ -11,7 +11,7 @@ import Sheet from "./Sheet";
 import { CATEGORIES } from "@/lib/config";
 import { useCart, useFavs } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
-import { addLine, firstAvail, isOut } from "@/lib/types";
+import { addLine, firstAvail, isOut, ratingText } from "@/lib/types";
 import { ngn } from "@/lib/util";
 
 export default function ProductView({ slug }: { slug: string }) {
@@ -27,9 +27,10 @@ export default function ProductView({ slug }: { slug: string }) {
   const cat = CATEGORIES.find((c) => c.slug === p.category), fav = favs.includes(p.id), imgs = p.images;
   const related = products.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 4);
   const stats: { k: string; I: LucideIcon; v: string }[] = [
-    { k: "Longevity", I: Hourglass, v: p.longevity ? `${p.longevity}/10` : "-" }, { k: "Projection", I: Radio, v: p.projection ? `${p.projection}/10` : "-" },
-    { k: "Sillage", I: Wind, v: p.sillage ? `${p.sillage}/10` : "-" }, { k: "Concentration", I: Droplet, v: p.concentration || "-" },
+    { k: "Longevity", I: Hourglass, v: ratingText(p, "longevity") }, { k: "Projection", I: Radio, v: ratingText(p, "projection") },
+    { k: "Sillage", I: Wind, v: ratingText(p, "sillage") }, { k: "Concentration", I: Droplet, v: p.concentration || "-" },
   ];
+  const noteLines = p.notes.split("\n").map((l) => l.trim()).filter(Boolean);
   const share = async () => { const url = location.href; try { if (navigator.share) await navigator.share({ title: p.name, url }); else { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } } catch { /* cancelled */ } };
   const add = () => { setCart((c) => addLine(c, p.id, sel.id, qty)); setAdded(true); };
   return (
@@ -59,11 +60,11 @@ export default function ProductView({ slug }: { slug: string }) {
           </div>
           {p.variants.length > 1 && <><span className="lab" style={{ margin: 0 }}>Size</span><div className="sizes" role="radiogroup" aria-label="Size">{p.variants.map((v) => <button key={v.id} role="radio" aria-checked={v.id === sel.id} className={"sz" + (v.id === sel.id ? " on" : "")} disabled={!v.available} onClick={() => setVid(v.id)}>{v.label || "Standard"}<br />{ngn(v.price)}</button>)}</div></>}
           {p.variants.length === 1 && sel.label && <div className="muted">{sel.label}</div>}
-          {p.description && <p>{p.description}</p>}
-          {p.notes && <p><b>Fragrance notes:</b> {p.notes}</p>}
-          <div className="stats">{stats.map(({ k, I, v }) => <div className="st" key={k}><b><I size={26} strokeWidth={1.5} /></b><span>{k}</span><i>{v}</i></div>)}</div>
-          <details className="small muted" style={{ marginBottom: 12 }}><summary style={{ cursor: "pointer", minHeight: 32 }}>What do these mean?</summary>
-            <p>Longevity is how long the scent lasts. Projection is how far it travels from you at first. Sillage is the trail it leaves as you move. Concentration is the strength type of the perfume. Ratings are 1 to 10 and are given by ScentbyBecca. A dash means not rated yet.</p></details>
+          {p.description && <p className="pre">{p.description}</p>}
+          {noteLines.length > 0 && <div className="notes"><b>Fragrance notes</b>{noteLines.map((l, i) => { const m = /^([^:]{2,24}):\s*(.*)$/.exec(l); return m ? <p key={i}><b>{m[1]}:</b> {m[2]}</p> : <p key={i}>{l}</p>; })}</div>}
+          {stats.some((s) => s.v !== "-") && <div className="stats">{stats.map(({ k, I, v }) => <div className="st" key={k}><b><I size={26} strokeWidth={1.5} /></b><span>{k}</span><i>{v}</i></div>)}</div>}
+          {stats.some((s) => s.v !== "-") && <details className="small muted" style={{ marginBottom: 12 }}><summary style={{ cursor: "pointer", minHeight: 32 }}>What do these mean?</summary>
+            <p>Longevity is how long the scent lasts. Projection is how far it travels from you at first. Sillage is the trail it leaves as you move. Concentration is the strength type of the perfume. Ratings are given by ScentbyBecca, as a number out of 10 or a grade from Fair to Excellent. A dash means not rated yet.</p></details>}
           {out ? <p className="warn">This item is out of stock right now. Message us on WhatsApp to ask when it returns.</p> : (
             <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "16px 0" }}>

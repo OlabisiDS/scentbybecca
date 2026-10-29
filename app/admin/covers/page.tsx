@@ -14,14 +14,14 @@ export default function Covers() {
   const put = async (slug: string, images: string[]) => { await api("covers", { method: "PUT", body: { category: slug, images } }); setCovers((c) => ({ ...c!, [slug]: images })); };
   const pick = async (slug: string, files: FileList | null) => {
     if (!files) return; const list = [...(covers[slug] || [])]; let msg = ""; setBusy(slug);
-    try { for (const f of Array.from(files)) { if (list.length >= 3) { msg = "You can add up to 3 covers per category."; break; } list.push((await api("upload", { method: "POST", body: { dataUrl: await readImage(f, 900), folder: "covers" } })).url); } await put(slug, list); }
+    try { for (const f of Array.from(files)) { if (list.length >= 3) { msg = "You can add up to 3 covers per category."; break; } list.push((await api("upload", { method: "POST", body: { dataUrl: await readImage(f, 1400), folder: "covers" } })).url); } await put(slug, list); }
     catch (x) { msg = (x as Error).message; }
     setBusy(""); setErr((e) => ({ ...e, [slug]: msg }));
   };
   return (
     <>
       <h1>Category covers</h1>
-      <p className="muted small">Add up to 3 landscape photos per category. With more than one, the home page box fades between them at random moments. With none, the box uses a product photo or a placeholder.</p>
+      <p className="muted small">Add up to 3 wide (landscape) photos per category, for example 1600 by 800 pixels. With more than one, the home page box fades between them at random moments. With none, the box uses a product photo or a placeholder.</p>
       {CATEGORIES.map((c) => { const l = covers[c.slug] || []; return (
         <div className="cardx" key={c.slug}>
           <b>{c.name}</b>

@@ -6,6 +6,7 @@ const wa = `https://wa.me/${WHATSAPP_NUMBER}`;
 const ext = { target: "_blank", rel: "noopener noreferrer" };
 const Privacy = () => (
   <div className="policy">
+    <p className="muted small">Draft for the owner to review before launch. This is not legal advice.</p>
     <h2>What we collect</h2><p>When you place an order we collect your name, phone number and delivery address so we can process and deliver it. If you write a review we collect your name, your review and any photos you choose to add.</p>
     <h2>How we use it</h2><p>We use your details only to process your order, deliver it, confirm payment, answer your questions and show approved reviews. We do not sell your details.</p>
     <h2>Reviews and photos</h2><p>Reviews are checked before they appear. If you want your review or photo removed, contact us and we will remove it.</p>

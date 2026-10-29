@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUp, Boxes, ChevronDown, ChevronRight, Droplet, Gem, Gift, Heart, Home, Info, Instagram, Menu, Package, Phone, Shuffle, ShoppingBag, Sparkles, SprayCan, Star, Tag, Truck, Wind, X, type LucideIcon } from "lucide-react";
+import { ArrowUp, Boxes, ChevronDown, ChevronRight, Droplet, Gem, Gift, Heart, Home, Info, Instagram, Menu, Package, Phone, Shuffle, ShoppingBag, Sparkles, SprayCan, Star, Tag, Truck, Wind, X, PackageSearch, type LucideIcon } from "lucide-react";
 import Setup from "./Setup";
+import { PromoBar, PromoPopup } from "./Promos";
 import { CATEGORIES, INSTAGRAM_URL, LOGO, TIKTOK_URL, WHATSAPP_NUMBER } from "@/lib/config";
 import { useCart, useFavs } from "@/lib/hooks";
 import { StoreProvider, useStore } from "@/lib/store";
@@ -47,7 +48,7 @@ function Drawer({ close }: { close: () => void }) {
           <label className="sr" htmlFor="ms">Search fragrances</label><input id="ms" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search fragrances" />
         </form>
         <nav>
-          <L href="/" icon={Home} label="Home" /><L href="/shop" icon={ShoppingBag} label="Shop All" /><L href="/worth-discovering" icon={Sparkles} label="Worth Discovering" /><L href="/favourites" icon={Heart} label="Favourites" /><L href="/combo" icon={Shuffle} label="Curate a Combo" />
+          <L href="/" icon={Home} label="Home" /><L href="/shop" icon={ShoppingBag} label="Shop All" /><L href="/worth-discovering" icon={Sparkles} label="Worth Discovering" /><L href="/favourites" icon={Heart} label="Favourites" /><L href="/combo" icon={Shuffle} label="Curate a Combo" /><L href="/orders" icon={PackageSearch} label="Track your order" />
           {CATEGORIES.map((c) => {
             const I = ICONS[c.slug];
             if (!c.subs) return <L key={c.slug} href={`/shop?cat=${c.slug}`} icon={I} label={c.name} />;
@@ -119,6 +120,6 @@ function Gate({ children }: { children: React.ReactNode }) {
 }
 export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  if (path.startsWith("/admin")) return <>{children}</>;
-  return <StoreProvider><NavProgress /><Header /><main><Gate>{children}</Gate></main><Footer /><Fab /></StoreProvider>;
+  if (path.startsWith("/admin") || path.startsWith("/reset-password")) return <>{children}</>;
+  return <StoreProvider><NavProgress /><PromoBar /><Header /><main><Gate>{children}</Gate></main><Footer /><Fab /><PromoPopup /></StoreProvider>;
 }

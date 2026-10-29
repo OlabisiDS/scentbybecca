@@ -17,6 +17,7 @@ export default function Dashboard() {
   return (
     <>
       <h1>Welcome back</h1>
+      {summary.emailConfigured === false && <p className="warn">Order emails are switched off because no email service is set up yet. Orders still work. See the README, section Email.</p>}
       <div className="stats2">
         <Link href="/admin/orders" className={"stat" + (summary.ordersToCheck ? " hot" : "")}><b>{summary.ordersToCheck}</b>Orders to check</Link>
         <Link href="/admin/reviews" className={"stat" + (summary.pendingReviews ? " hot" : "")}><b>{summary.pendingReviews}</b>Reviews to approve</Link>

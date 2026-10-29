@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CartLine } from "./types";
-// Device-only storage for cart and favourites (these are personal to each visitor and not stored in the database).
+// Device-only storage for cart, favourites and a convenience list of recent order references.
 export function useLocal<T>(key: string, initial: T) {
   const init = useRef(initial);
   const [val, setVal] = useState<T>(initial);
@@ -24,3 +24,4 @@ export function useLocal<T>(key: string, initial: T) {
 }
 export const useCart = () => useLocal<CartLine[]>("sbb_cart_v3", []);
 export const useFavs = () => useLocal<string[]>("sbb_favs_v3", []);
+export const useRecent = () => useLocal<{ id: string; number: string; at: number }[]>("sbb_recent_orders_v1", []);

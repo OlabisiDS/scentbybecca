@@ -1,16 +1,17 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Image as ImgIcon } from "lucide-react";
+import { ArrowRight, Image as ImgIcon } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import Reveal from "@/components/Reveal";
+import { PromoBanner } from "@/components/Promos";
 import { ReviewsPreview } from "@/components/Reviews";
 import { CATEGORIES, HERO_POSTER, HERO_VIDEO, STORY, STORY_CLOSING, STORY_TITLE } from "@/lib/config";
 import { useStore } from "@/lib/store";
 import { rankBy } from "@/lib/util";
 
 export default function HomePage() {
-  const { products, covers, shelves, ready } = useStore();
+  const { products, covers, shelves, video, ready } = useStore();
   const [tick, setTick] = useState<Record<string, number>>({});
   const picks = rankBy(products.filter((p) => p.featured), shelves["worth"]).slice(0, 4);
   useEffect(() => {
@@ -25,8 +26,9 @@ export default function HomePage() {
   }, [covers]);
   return (
     <>
-      <section className="hero">
-        <video className="hv" autoPlay muted loop playsInline poster={HERO_POSTER} preload="metadata" aria-hidden="true"><source src={HERO_VIDEO} type="video/mp4" /></video>
+      <PromoBanner />
+      <section className="hero" style={{ backgroundImage: `url(${video?.posterUrl || HERO_POSTER})` }}>
+        <video key={video?.id || "default"} className="hv" autoPlay muted loop playsInline poster={video?.posterUrl || HERO_POSTER} preload="metadata" aria-hidden="true"><source src={video?.videoUrl || HERO_VIDEO} type={video?.videoUrl?.endsWith(".webm") ? "video/webm" : "video/mp4"} /></video>
         <div className="ov" aria-hidden="true" />
         <div className="in">
           <h1>The Scents by Becca Brand</h1>
@@ -37,15 +39,17 @@ export default function HomePage() {
       </section>
       <div className="wrap">
         <section className="sec"><Reveal><h2>Shop by category</h2></Reveal>
-          <div className="grid">
+          <div className="banners">
             {CATEGORIES.map((c, n) => {
               const imgs = covers[c.slug]?.length ? covers[c.slug] : ([products.find((p) => p.category === c.slug && p.images[0])?.images[0]].filter(Boolean) as string[]);
               const cur = imgs.length ? (tick[c.slug] || 0) % imgs.length : 0;
               return (
                 <Reveal key={c.slug} delay={(n % 2) * 90}>
-                  <Link href={`/shop?cat=${c.slug}`} className="tile">
-                    <div className="im">{imgs.length ? imgs.map((s, i) => <img key={i} className={"cv" + (i === cur ? " on" : "")} src={s} alt="" loading="lazy" />) : <ImgIcon size={32} strokeWidth={1.5} aria-hidden="true" />}</div>
-                    <div className="nm">{c.name}</div>
+                  <Link href={`/shop?cat=${c.slug}`} className="banner" aria-label={c.name}>
+                    <div className="bi">{imgs.map((s, i) => <img key={i} className={"cv" + (i === cur ? " on" : "")} src={s} alt="" loading="lazy" />)}</div>
+                    {!imgs.length && <ImgIcon className="bph" size={28} strokeWidth={1.5} aria-hidden="true" />}
+                    <div className="bo" aria-hidden="true" />
+                    <div className="bt"><span className="bn">{c.name}</span><span className="bc">Shop now <ArrowRight size={16} strokeWidth={1.5} /></span></div>
                   </Link>
                 </Reveal>
               );
