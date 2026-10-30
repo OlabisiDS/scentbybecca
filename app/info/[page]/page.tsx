@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import PageHeader from "@/components/PageHeader";
 import Policy from "@/components/Policy";
 import { ReviewsPage } from "@/components/Reviews";
 import { INSTAGRAM_URL, STORY, STORY_CLOSING, STORY_TITLE, TIKTOK_URL, WHATSAPP_NUMBER } from "@/lib/config";
@@ -25,5 +26,5 @@ export default function Info({ params }: { params: { page: string } }) {
   if (params.page === "reviews") return <ReviewsPage />;
   const p = PAGES[params.page];
   if (!p) notFound();
-  return <div className="wrap pad"><h1 style={{ fontSize: 26, marginBottom: 12 }}>{p.title}</h1><div style={{ maxWidth: 620 }}>{p.body}</div></div>;
+  return <><PageHeader title={p.title} pageKey={params.page} crumb={p.title} /><div className="wrap pad"><div style={{ maxWidth: 620 }}>{p.body}</div></div></>;
 }

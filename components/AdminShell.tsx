@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { Truck, Landmark, LayoutDashboard, ListOrdered, LogOut, MessageSquare, MoreHorizontal, Package, Receipt, Images, Wrench, ExternalLink, Megaphone, Film, type LucideIcon } from "lucide-react";
+import { Truck, Landmark, LayoutDashboard, ListOrdered, LogOut, MessageSquare, MoreHorizontal, Package, Receipt, Images, Wrench, ExternalLink, Megaphone, Film, GalleryHorizontal, PanelTop, Bell, type LucideIcon } from "lucide-react";
 import PasswordField from "./PasswordField";
 import Sheet from "./Sheet";
 import { LOGO } from "@/lib/config";
@@ -15,7 +15,7 @@ const Ctx = createContext<{ api: (r: string, o?: Opt) => Promise<any>; summary: 
 export const useAdmin = () => useContext(Ctx);
 const NAV: { href: string; label: string; I: LucideIcon; badge?: "ordersToCheck" | "pendingReviews" }[] = [
   { href: "/admin", label: "Home", I: LayoutDashboard }, { href: "/admin/products", label: "Products", I: Package }, { href: "/admin/orders", label: "Orders", I: Receipt, badge: "ordersToCheck" },
-  { href: "/admin/reviews", label: "Reviews", I: MessageSquare, badge: "pendingReviews" }, { href: "/admin/promotions", label: "Promotions", I: Megaphone }, { href: "/admin/video", label: "Homepage video", I: Film }, { href: "/admin/shelves", label: "Shelf order", I: ListOrdered }, { href: "/admin/covers", label: "Category covers", I: Images },
+  { href: "/admin/reviews", label: "Reviews", I: MessageSquare, badge: "pendingReviews" }, { href: "/admin/slides", label: "Hero slides", I: GalleryHorizontal }, { href: "/admin/headers", label: "Page headers", I: PanelTop }, { href: "/admin/announcements", label: "Announcements", I: Bell }, { href: "/admin/promotions", label: "Promotions", I: Megaphone }, { href: "/admin/video", label: "Video library", I: Film }, { href: "/admin/shelves", label: "Shelf order", I: ListOrdered }, { href: "/admin/covers", label: "Category covers", I: Images },
   { href: "/admin/delivery", label: "Delivery and orders", I: Truck }, { href: "/admin/banks", label: "Bank accounts", I: Landmark }, { href: "/admin/tools", label: "Import and backup", I: Wrench },
 ];
 async function call(r: string, o: Opt = {}) {

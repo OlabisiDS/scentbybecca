@@ -43,8 +43,8 @@ export default function VideoAdmin() {
   const publish = async (id: string | null) => { try { await api("hero-videos-publish", { method: "POST", body: { id } }); flash(id ? "Published. The home page now shows this video." : "The original video is back on the home page."); load(); } catch (e) { setErr((e as Error).message); } };
   return (
     <>
-      <h1>Homepage video</h1>
-      <p className="muted small">The video plays silently behind the top of the home page. Use a short MP4, ideally under 10 MB, since most visitors are on phones. A still image from the video is used while it loads and for visitors who prefer less motion.</p>
+      <h1>Video library</h1>
+      <p className="muted small">Upload videos here, then use them as a slide in Hero slides. Use a short MP4, ideally under 10 MB, since most visitors are on phones. A still image from the video is used while it loads and for visitors who prefer less motion.</p>
       {msg && <div className="fb" role="status">{msg}</div>}{err && <p className="err" role="alert">{err}</p>}
       <div className="cardx">
         <b>Add a new video</b>
@@ -55,12 +55,12 @@ export default function VideoAdmin() {
       </div>
       <h2 style={{ fontSize: 16, margin: "20px 0 8px" }}>Your videos</h2>
       {items === null ? <p className="muted">Loading...</p> : <>
-        <div className="cardx"><b>Original video</b> {!items.some((v) => v.active) && <span className="tag g">Published</span>}<p className="small muted">The video the site launched with.</p>{items.some((v) => v.active) && <button className="btn o sm fit" onClick={() => publish(null)}>Use the original video</button>}</div>
+        <div className="cardx"><b>Original video</b> {!items.some((v) => v.active) && <span className="tag g">Published</span>}<p className="small muted">The video the site launched with. Old home videos only show when there are no hero slides.</p>{items.some((v) => v.active) && <button className="btn o sm fit" onClick={() => publish(null)}>Use the original video</button>}</div>
         {items.map((v) => (
           <div className="cardx" key={v.id}>
             <b>{v.title}</b> {v.active && <span className="tag g">Published</span>}
             <video src={v.videoUrl} poster={v.posterUrl || undefined} controls muted playsInline preload="none" style={{ width: "100%", maxHeight: 260, background: "#000", margin: "8px 0" }} />
-            <div className="acts">{!v.active && <button className="btn sm fit" onClick={() => publish(v.id)}>Publish this video</button>}
+            <div className="acts">{!v.active && <button className="btn sm fit" onClick={() => publish(v.id)}>Use as old home video</button>}
               <button className="btn red sm fit" onClick={async () => { if (confirm(`Delete "${v.title}" permanently?${v.active ? " The original video will be shown instead." : ""}`)) { try { await api("hero-videos", { method: "DELETE", query: `id=${v.id}` }); load(); } catch (e) { setErr((e as Error).message); } } }}>Delete</button></div>
           </div>
         ))}</>}

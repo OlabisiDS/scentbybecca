@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import PageHeader from "@/components/PageHeader";
+import Sheet from "@/components/Sheet";
 import { buildMessage } from "@/lib/calc";
 import { useRecent } from "@/lib/hooks";
 import { Order, STATUS_LABEL } from "@/lib/types";
@@ -13,7 +15,7 @@ const STEPS = ["Order received", "Payment reported", "Payment confirmed", "Dispa
 export default function OrderPage() {
   const { id } = useParams<{ id: string }>();
   const [, setRecent] = useRecent();
-  const [o, setO] = useState<Order | null>(null), [banks, setBanks] = useState<Bk[]>([]), [state, setState] = useState<"load" | "ok" | "none">("load"), [copied, setCopied] = useState(""), [err, setErr] = useState(""), [busy, setBusy] = useState(false);
+  const [o, setO] = useState<Order | null>(null), [banks, setBanks] = useState<Bk[]>([]), [state, setState] = useState<"load" | "ok" | "none">("load"), [copied, setCopied] = useState(""), [err, setErr] = useState(""), [busy, setBusy] = useState(false), [popup, setPopup] = useState(false);
   const load = useCallback(async () => {
     const r = await fetch(`/api/orders/${id}`); if (!r.ok) { setState("none"); return; }
     const j = await r.json(); setO(j.order); setBanks(j.banks); setState("ok");
@@ -25,14 +27,15 @@ export default function OrderPage() {
   const upfront = o.subtotal - o.discount + (o.feePending ? 0 : (o.deliveryFee ?? 0)), at = stage(o), total = o.subtotal - o.discount + (o.deliveryFee ?? 0);
   const claim = async () => {
     setBusy(true); setErr("");
-    try { const r = await fetch(`/api/orders/${o.id}/claim`, { method: "POST" }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "We could not record your notification."); await load(); }
+    try { const r = await fetch(`/api/orders/${o.id}/claim`, { method: "POST" }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "We could not record your notification."); await load(); setPopup(true); }
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   const copy = (t: string, k: string) => { navigator.clipboard?.writeText(t); setCopied(k); setTimeout(() => setCopied(""), 1500); };
   const waMsg = buildMessage({ number: o.number, items: o.items, subtotal: o.subtotal, discount: o.discount, discountPercent: o.discountPercent, promoTitle: o.promoTitle, zone: o.zone, area: o.area, requestedArea: o.requestedArea, deliveryFee: o.deliveryFee, name: o.name, phone: o.phone, address: o.address, notes: o.notes, paymentReported: o.paidClaimed });
   return (
+    <>
+      <PageHeader title={`Order ${o.number}`} pageKey="track" steps={2} crumb="Order" />
     <div className="wrap pad">
-      <h1 style={{ fontSize: 24 }}>Order {o.number}</h1>
       <div className="warn" style={{ background: "#fff" }}><b>Your order reference: {o.number}</b> <button className="btn o sm fit" style={{ marginLeft: 8 }} onClick={() => copy(o.number, "ref")}>{copied === "ref" ? "Copied" : "Copy"}</button>
         <div className="small" style={{ marginTop: 6 }}>Use this reference with your phone number on the <Link href="/orders">Track your order</Link> page at any time. This page also stays available at its link{o.email ? ", and we have emailed it to you" : ""}.</div></div>
       {o.status === "cancelled" ? <p className="tag r">Cancelled</p> : STEPS.map((s, i) => <div key={s} className={"step" + (i <= at ? " on" : "")}><span className="dot" aria-hidden="true" />{s}{i === at && " (current)"}</div>)}
@@ -72,5 +75,15 @@ export default function OrderPage() {
       </div>
       <p className="small muted" style={{ marginTop: 12 }}>Status: {STATUS_LABEL[o.status]}</p>
     </div>
+    {popup && (
+      <Sheet title="Payment notification received" onClose={() => setPopup(false)}>
+        <p style={{ fontSize: 19 }}><b>Your payment notification has been received by ScentbyBecca.</b></p>
+        <p>Our team will review your payment and contact you if any further information is needed.</p>
+        <div className="warn" style={{ background: "#fff" }}>Your order reference: <b>{o.number}</b> <button className="btn o sm fit" style={{ marginLeft: 8 }} onClick={() => copy(o.number, "ref")}>{copied === "ref" ? "Copied" : "Copy"}</button></div>
+        <p className="small">You can use this reference to check your order status at any time. This is not yet a payment confirmation. We will tell you as soon as it is confirmed.</p>
+        <div style={{ display: "grid", gap: 10, marginTop: 14 }}><button className="btn" onClick={() => setPopup(false)}>View my order status</button><Link className="btn o" href="/orders" onClick={() => setPopup(false)}>Track another order</Link></div>
+      </Sheet>
+    )}
+    </>
   );
 }

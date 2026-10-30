@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CATEGORIES } from "@/lib/config";
 import { emailConfigured, json, notify, requireAdmin, svc, uploadDataUrl } from "@/lib/server";
-import { GRADES, rowToArea, rowToOrder, rowToProduct, rowToPromo, rowToReview, rowToVideo } from "@/lib/types";
+import { GRADES, rowToSlide, rowToArea, rowToOrder, rowToProduct, rowToPromo, rowToReview, rowToVideo } from "@/lib/types";
 import { slugify } from "@/lib/util";
 
 type Ctx = { params: { resource: string } };
@@ -41,6 +41,14 @@ async function uniqueSlug(db: ReturnType<typeof svc>, name: string) {
   const taken = new Set((data || []).map((x: any) => x.slug)); let s = base, n = 2;
   while (taken.has(s)) s = `${base}-${n++}`; return s;
 }
+function cleanSlide(b: any) {
+  const kind = b.kind === "video" ? "video" : "image", image = url(b.imageUrl), video = url(b.videoUrl);
+  if (kind === "image" && !image) throw new Error("Add the phone image for this slide.");
+  if (kind === "video" && !video) throw new Error("Choose a video for this slide.");
+  const date = (x: any) => { if (!x) return null; const d = new Date(x); if (isNaN(+d)) throw new Error("One of the dates is not valid."); return d.toISOString(); };
+  const starts = date(b.startsAt), ends = date(b.endsAt); if (starts && ends && Date.parse(ends) < Date.parse(starts)) throw new Error("The end date must be after the start date.");
+  return { title: String(b.title || "").trim().slice(0, 80), kind, image_url: image, image_wide_url: url(b.imageWideUrl), video_url: video, poster_url: url(b.posterUrl), href: url(b.href), active: b.active !== false, starts_at: starts, ends_at: ends };
+}
 const storagePath = (u: string) => { const i = u.indexOf("/media/"); return i >= 0 ? u.slice(i + 7) : ""; };
 
 export async function GET(req: Request, { params }: Ctx) {
@@ -69,6 +77,9 @@ export async function GET(req: Request, { params }: Ctx) {
   if (r === "covers") { const { data } = await db.from("covers").select("*"); return json({ items: data || [] }); }
   if (r === "promotions") { const { data, error } = await db.from("promotions").select("*").order("created_at", { ascending: false }); if (error) return json({ error: "Promotions are not set up yet. Run the 002_improvements.sql file in Supabase." }, 500); return json({ items: (data || []).map(rowToPromo) }); }
   if (r === "hero-videos") { const { data, error } = await db.from("hero_videos").select("*").order("created_at", { ascending: false }); if (error) return json({ error: "Homepage videos are not set up yet. Run the 002_improvements.sql file in Supabase." }, 500); return json({ items: (data || []).map(rowToVideo) }); }
+  if (r === "hero-slides") { const { data, error } = await db.from("hero_slides").select("*").order("sort"); if (error) return json({ error: "Run the 003_redesign.sql file in Supabase first." }, 500); return json({ items: (data || []).map(rowToSlide) }); }
+  if (r === "page-headers") { const { data, error } = await db.from("page_headers").select("*"); if (error) return json({ error: "Run the 003_redesign.sql file in Supabase first." }, 500); return json({ items: data || [] }); }
+  if (r === "announcements") { const { data, error } = await db.from("announcements").select("*").order("sort"); if (error) return json({ error: "Run the 003_redesign.sql file in Supabase first." }, 500); return json({ items: data || [] }); }
   if (r === "export") {
     const [p, o, rv, z, b, pr] = await Promise.all([db.from("products").select("*"), db.from("orders").select("*"), db.from("reviews").select("*"), db.from("delivery_zones").select("*"), db.from("banks").select("*"), db.from("promotions").select("*")]);
     return json({ exportedAt: new Date().toISOString(), products: p.data, orders: o.data, reviews: rv.data, delivery_zones: z.data, banks: b.data, promotions: pr.data });
@@ -80,7 +91,7 @@ export async function POST(req: Request, { params }: Ctx) {
   if (!(await requireAdmin(req))) return deny();
   const db = svc(), r = params.resource, b = await req.json().catch(() => ({}));
   try {
-    if (r === "upload") { if (!["products", "covers", "promos", "videos"].includes(b.folder)) throw new Error("Invalid folder."); return json({ url: await uploadDataUrl(String(b.dataUrl), b.folder) }); }
+    if (r === "upload") { if (!["products", "covers", "promos", "videos", "slides", "headers"].includes(b.folder)) throw new Error("Invalid folder."); return json({ url: await uploadDataUrl(String(b.dataUrl), b.folder) }); }
     if (r === "video-upload-url") {
       const ext = b.ext === "webm" ? "webm" : "mp4", path = `videos/${crypto.randomUUID()}.${ext}`;
       const { data, error } = await db.storage.from("media").createSignedUploadUrl(path);
@@ -114,6 +125,12 @@ export async function POST(req: Request, { params }: Ctx) {
       const title = String(b.title || "").trim().slice(0, 80) || "Homepage video";
       const { error } = await db.from("hero_videos").insert({ title, video_url: db.storage.from("media").getPublicUrl(path).data.publicUrl, poster_url: url(b.posterUrl), active: false });
       if (error) throw new Error("Could not save the video."); return json({ ok: true });
+    }
+    if (r === "hero-slides") {
+      const row = cleanSlide(b);
+      if (b.id && UUID.test(b.id)) { const { error } = await db.from("hero_slides").update(row).eq("id", b.id); if (error) throw new Error("Could not save the slide."); return json({ id: b.id }); }
+      const { data: last } = await db.from("hero_slides").select("sort").order("sort", { ascending: false }).limit(1).maybeSingle();
+      const { data, error } = await db.from("hero_slides").insert({ ...row, sort: (last?.sort ?? -1) + 1 }).select("id").single(); if (error) throw new Error("Could not save the slide."); return json({ id: data.id });
     }
     if (r === "hero-videos-publish") {
       await db.from("hero_videos").update({ active: false }).eq("active", true);
@@ -162,6 +179,19 @@ export async function PUT(req: Request, { params }: Ctx) {
       return json({ ok: true });
     }
     if (r === "settings") { await db.from("settings").upsert({ key: "orders", value: { paused: !!b.paused, message: String(b.message || "").slice(0, 200) } }); return json({ ok: true }); }
+    if (r === "hero-slides-order") { for (const [i, id] of (Array.isArray(b.ids) ? b.ids : []).entries()) if (UUID.test(id)) await db.from("hero_slides").update({ sort: i }).eq("id", id); return json({ ok: true }); }
+    if (r === "reviews-order") { for (const [i, id] of (Array.isArray(b.ids) ? b.ids : []).slice(0, 300).entries()) if (UUID.test(id)) await db.from("reviews").update({ sort_order: (i + 1) * 10 }).eq("id", id); return json({ ok: true }); }
+    if (r === "page-headers") { await db.from("page_headers").upsert({ page: String(b.page).slice(0, 40), image_url: url(b.imageUrl) }); return json({ ok: true }); }
+    if (r === "announcements") {
+      const list = (Array.isArray(b.items) ? b.items : []).slice(0, 8).map((x: any, i: number) => ({ ...(UUID.test(x.id || "") ? { id: x.id } : {}), text: String(x.text || "").trim().slice(0, 120), href: url(x.href), active: x.active !== false, sort: i }));
+      if (list.some((x: any) => !x.text)) throw new Error("Every announcement needs some text.");
+      const { data: have } = await db.from("announcements").select("id"); const keep = new Set(list.filter((x: any) => x.id).map((x: any) => x.id));
+      const gone = (have || []).map((x: any) => x.id).filter((id: string) => !keep.has(id)); if (gone.length) await db.from("announcements").delete().in("id", gone);
+      const withId = list.filter((x: any) => x.id), noId = list.filter((x: any) => !x.id);
+      if (withId.length) { const { error } = await db.from("announcements").upsert(withId); if (error) throw new Error("Could not save."); }
+      if (noId.length) { const { error } = await db.from("announcements").insert(noId); if (error) throw new Error("Could not save."); }
+      return json({ ok: true });
+    }
     if (r === "shelves") { await db.from("shelves").upsert({ key: String(b.key).slice(0, 60), ids: (b.ids || []).map(String).slice(0, 200) }); return json({ ok: true }); }
     if (r === "covers") { await db.from("covers").upsert({ category: String(b.category).slice(0, 60), images: (b.images || []).filter((s: any) => typeof s === "string").slice(0, 3) }); return json({ ok: true }); }
   } catch (e) { return json({ error: (e as Error).message }, 400); }
@@ -186,6 +216,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     const p: any = {};
     if (["pending", "visible", "hidden"].includes(b.status)) p.status = b.status;
     if (typeof b.reply === "string") p.reply = b.reply.slice(0, 800);
+    if (b.unpin === true) p.sort_order = null;
     await db.from("reviews").update(p).eq("id", b.id); return json({ ok: true });
   }
   if (r === "reviews-seen") { await db.from("reviews").update({ seen: true }).eq("seen", false); return json({ ok: true }); }
@@ -201,6 +232,7 @@ export async function DELETE(req: Request, { params }: Ctx) {
   if (params.resource === "products") { await db.from("products").delete().eq("id", id); return json({ ok: true }); }
   if (params.resource === "reviews") { await db.from("reviews").delete().eq("id", id); return json({ ok: true }); }
   if (params.resource === "promotions") { await db.from("promotions").delete().eq("id", id); return json({ ok: true }); }
+  if (params.resource === "hero-slides") { await db.from("hero_slides").delete().eq("id", id); return json({ ok: true }); }
   if (params.resource === "hero-videos") {
     const { data } = await db.from("hero_videos").select("video_url, poster_url").eq("id", id).maybeSingle();
     const paths = [data?.video_url, data?.poster_url].map((u) => storagePath(u || "")).filter(Boolean);

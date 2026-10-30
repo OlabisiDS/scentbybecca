@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Pic } from "@/components/ProductCard";
 import { bestPromo, buildMessage, calc } from "@/lib/calc";
 import { useCart, useRecent } from "@/lib/hooks";
@@ -36,10 +37,11 @@ export default function CartPage() {
     } catch (e) { setErr((e as Error).message); setBusy(false); }
   };
   if (!ready) return <div className="wrap pad muted">Loading...</div>;
-  if (lines.length === 0) return <div className="wrap pad"><h1 style={{ fontSize: 24 }}>Your cart</h1><p className="muted">Your cart is empty.</p><div className="row2" style={{ maxWidth: 420 }}><Link className="btn" href="/shop">Continue shopping</Link><Link className="btn o" href="/orders">Track an order</Link></div></div>;
+  if (lines.length === 0) return <><PageHeader title="Your cart" pageKey="cart" steps={0} /><div className="wrap pad"><p className="muted">Your cart is empty.</p><div className="row2" style={{ maxWidth: 420 }}><Link className="btn" href="/shop">Continue shopping</Link><Link className="btn o" href="/orders">Track an order</Link></div></div></>;
   return (
+    <>
+      <PageHeader title="Checkout" pageKey="cart" steps={1} />
     <div className="wrap pad">
-      <h1 style={{ fontSize: 24, marginBottom: 8 }}>Your cart</h1>
       {lines.map(({ l, p, v }) => (
         <div className="line" key={l.pid + l.vid}>
           <Pic p={p} />
@@ -81,6 +83,6 @@ export default function CartPage() {
       {err && <p className="err" role="alert">{err}</p>}
       <div style={{ marginTop: 16, display: "grid", gap: 10 }}><button className="btn" onClick={place} disabled={busy || orders.paused}>{busy ? "Placing order..." : "Place order"}</button><button className="btn o" onClick={wa}>Send my cart list on WhatsApp</button><Link className="btn o" href="/shop">Continue shopping</Link><Link href="/orders" style={{ textAlign: "center", minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>Already ordered? Track your order</Link></div>
       <p className="small muted">Placing an order does not charge you. Only send money to the account shown on your order page.</p>
-    </div>
+    </div></>
   );
 }

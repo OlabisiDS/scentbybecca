@@ -22,7 +22,7 @@ export function PromoCard({ p }: { p: P }) {
 export function PromoBarView({ p }: { p: P }) {
   return <div className="pbar" role="region" aria-label="Offer">{p.headline}{p.body ? ` ${p.body}` : ""}{p.ctaLabel && <Cta p={p} className="" />}</div>;
 }
-export function PromoBar() { const { promos } = useStore(); const p = promos.find((x) => x.placement === "bar"); return p ? <PromoBarView p={p} /> : null; }
+export function PromoBar() { const { promos } = useStore(); const p = promos.find((x) => x.placement === "bar" || x.placement === "banner"); return p ? <PromoBarView p={p} /> : null; }
 export function PromoBanner() { const { promos } = useStore(); const p = promos.find((x) => x.placement === "banner"); return p ? <PromoCard p={p} /> : null; }
 export function PromoPopup() {
   const { promos } = useStore(); const path = usePathname();

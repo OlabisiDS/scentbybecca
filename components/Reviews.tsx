@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { Star } from "lucide-react";
 import Lightbox from "./Lightbox";
+import PageHeader from "./PageHeader";
 import Sheet from "./Sheet";
 import { readImage } from "@/lib/image";
 import { useStore } from "@/lib/store";
-import type { Review } from "@/lib/types";
+import { sortReviews, type Review } from "@/lib/types";
 
 export function Stars({ value }: { value: number }) {
   return <span role="img" aria-label={`${value} out of 5 stars`} style={{ display: "inline-flex", gap: 2, color: "var(--gold)" }}>{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={18} strokeWidth={1.5} fill={i <= value ? "currentColor" : "none"} />)}</span>;
@@ -61,33 +63,55 @@ export function WriteReview({ target, label = "Write a review" }: { target: stri
   const [open, setOpen] = useState(false);
   return <><button className="btn o" onClick={() => setOpen(true)}>{label}</button>{open && <Sheet title="Write a review" onClose={() => setOpen(false)}><Form target={target} onClose={() => setOpen(false)} /></Sheet>}</>;
 }
-const pub = (l: Review[], target: string) => l.filter((r) => r.target === target);
+const pub = (l: Review[], target: string) => sortReviews(l.filter((r) => r.target === target));
 export function ReviewsPage() {
   const { reviews, ready } = useStore();
   const vis = pub(reviews, "store");
-  return <div className="wrap pad"><h1 style={{ fontSize: 26, marginBottom: 12 }}>Customer reviews</h1><div style={{ marginBottom: 14, maxWidth: 320 }}><WriteReview target="store" /></div>{!ready ? <p className="muted">Loading...</p> : vis.length === 0 ? <p className="muted">No reviews yet.</p> : vis.map((r) => <ReviewCard key={r.id} r={r} />)}</div>;
-}
-export function ReviewsPreview() {
-  const { reviews, ready } = useStore();
-  const [n, setN] = useState(3);
-  const vis = pub(reviews, "store");
-  if (!ready || vis.length === 0) return null;
   return (
-    <section className="wrap sec" style={{ paddingBottom: 24 }}>
+    <>
+      <PageHeader title="Customer reviews" pageKey="reviews" crumb="Reviews" />
+      <div className="wrap pad"><div style={{ marginBottom: 14, maxWidth: 320 }}><WriteReview target="store" /></div>{!ready ? <p className="muted">Loading...</p> : vis.length === 0 ? <p className="muted">No reviews yet.</p> : vis.map((r) => <ReviewCard key={r.id} r={r} />)}</div>
+    </>
+  );
+}
+function Tile({ r }: { r: Review }) {
+  const [lb, setLb] = useState<number | null>(null);
+  return (
+    <article className="rcard">
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span className="av" aria-hidden="true">{r.name.charAt(0).toUpperCase()}</span><div><b style={{ font: "700 18px var(--display)" }}>{r.name}</b><div><Stars value={r.rating} /></div></div></div>
+      <p style={{ margin: "0 0 10px", flex: 1 }}>{r.text}</p>
+      {r.images.length > 0 && <div className="rimgs">{r.images.map((s, i) => <button key={i} onClick={() => setLb(i)} aria-label={`Enlarge photo ${i + 1} from ${r.name}`} style={{ border: 0, padding: 0, background: "none", cursor: "zoom-in" }}><img src={s} alt={`Photo shared by ${r.name}`} loading="lazy" style={{ width: 64, height: 64 }} /></button>)}</div>}
+      {r.reply && <div className="rrep"><b className="small">Reply from ScentbyBecca</b><p style={{ margin: "4px 0 0" }}>{r.reply}</p></div>}
+      {lb !== null && <Lightbox images={r.images} start={lb} onClose={() => setLb(null)} />}
+    </article>
+  );
+}
+// Home page review slider: the pinned reviews come first, in the order set in Admin > Reviews.
+export function ReviewsSection() {
+  const { reviews, ready } = useStore();
+  const vis = pub(reviews, "store"), ref = useRef<HTMLDivElement>(null), [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (vis.length < 2 || paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setInterval(() => { const el = ref.current; if (!el || !el.firstElementChild) return; const step = (el.firstElementChild as HTMLElement).offsetWidth + 12; if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 8) el.scrollTo({ left: 0, behavior: "smooth" }); else el.scrollBy({ left: step, behavior: "smooth" }); }, 5500);
+    return () => clearInterval(t);
+  }, [vis.length, paused]);
+  if (!ready || vis.length === 0) return null;
+  const avg = vis.reduce((a, r) => a + r.rating, 0) / vis.length;
+  return (
+    <section className="wrap sec" style={{ paddingBottom: 28 }}>
       <h2>What customers say</h2>
-      {vis.slice(0, n).map((r) => <ReviewCard key={r.id} r={r} />)}
-      <div className="row2" style={{ marginTop: 14 }}>{n < vis.length ? <button className="btn o" onClick={() => setN(n + 3)}>Show more reviews</button> : <span />}<WriteReview target="store" /></div>
+      <div className="rsum"><div className="big">Customer reviews</div><div style={{ display: "flex", justifyContent: "center", margin: "6px 0" }}><Stars value={Math.round(avg)} /></div><div className="small muted">Rated {avg.toFixed(1)} out of 5 from {vis.length} review{vis.length === 1 ? "" : "s"}</div></div>
+      <div className="rc-row" ref={ref} onTouchStart={() => setPaused(true)} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>{vis.map((r) => <Tile key={r.id} r={r} />)}</div>
+      <div className="row2" style={{ marginTop: 8 }}><Link className="btn o" href="/info/reviews">See all reviews</Link><WriteReview target="store" /></div>
     </section>
   );
 }
-export function ProductReviews({ productId }: { productId: string }) {
+export function ProductReviews({ productId, bare }: { productId: string; bare?: boolean }) {
   const { reviews, ready } = useStore();
   const vis = pub(reviews, productId);
-  return (
-    <section className="sec"><h2>Reviews for this fragrance</h2>
-      {ready && vis.length === 0 && <p className="muted">No reviews for this fragrance yet.</p>}
-      {vis.map((r) => <ReviewCard key={r.id} r={r} />)}
-      <div style={{ maxWidth: 320, marginTop: 10 }}><WriteReview target={productId} /></div>
-    </section>
-  );
+  const inner = (<>
+    {ready && vis.length === 0 && <p className="muted">No reviews for this fragrance yet.</p>}
+    {vis.map((r) => <ReviewCard key={r.id} r={r} />)}
+    <div style={{ maxWidth: 320, marginTop: 10 }}><WriteReview target={productId} /></div></>);
+  return bare ? <div>{inner}</div> : <section className="sec"><h2>Reviews for this fragrance</h2>{inner}</section>;
 }

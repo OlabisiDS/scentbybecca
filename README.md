@@ -36,3 +36,8 @@ Push to GitHub, create a Railway project from the repo, add the variables, then 
 
 ## What lives where
 Products, photos, videos, reviews, orders, promotions, delivery data: Supabase. Cart and favourites: the visitor's own device. Edit in code: WhatsApp number, social links, story, categories (`lib/config.ts`), policy text (`components/Policy.tsx`).
+
+## Redesign release (003)
+1. Run `supabase/migrations/003_redesign.sql` once (after 002). Your five existing reviews are pinned to the top in their current order; reorder them in Admin > Reviews > Display order.
+2. New admin pages: Hero slides (replaces the old rectangle banner for campaigns), Page headers (a photo for each page), Announcements (rotating strip), Video library.
+3. Fonts: Cormorant Garamond (headings), EB Garamond (text), Inter (forms and admin), Instrument Serif italic (tagline).

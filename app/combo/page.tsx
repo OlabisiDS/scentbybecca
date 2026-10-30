@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Lock, Shuffle, Unlock } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Pic } from "@/components/ProductCard";
 import { CATEGORIES } from "@/lib/config";
 import { useCart } from "@/lib/hooks";
@@ -42,8 +43,9 @@ export default function Combo() {
   const total = slots.reduce((a, p) => a + price(p), 0);
   const line = (p: Product) => `- ${p.name}${firstAvail(p).label ? ` (${firstAvail(p).label})` : ""} = ${ngn(price(p))}`;
   return (
+    <>
+      <PageHeader title="Curate your own combo" pageKey="combo" crumb="Combo" />
     <div className="wrap pad">
-      <h1 style={{ fontSize: 26, marginBottom: 6 }}>Curate your own combo</h1>
       <p className="muted">Pick what you like and let us shuffle a combination for you. Prices are the normal prices added together. No combo discount applies.</p>
       <span className="lab">How many fragrances?</span>
       <div className="chips">{[2, 3, 4].map((n) => <button key={n} className={"chip" + (count === n ? " on" : "")} onClick={() => { setCount(n); setSlots([]); setLocked([]); }} aria-pressed={count === n}>{n} items</button>)}</div>
@@ -63,6 +65,6 @@ export default function Combo() {
         <p style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: 600 }}><span>Total</span><span>{ngn(total)}</span></p>
         {budget && <p className="muted small">Your highest total: {ngn(Number(budget))}</p>}
         <div className="row2"><button className="btn" onClick={() => { setCart((c) => slots.reduce((acc, p) => addLine(acc, p.id, firstAvail(p).id, 1), c)); router.push("/cart"); }}>Add combo to cart</button><button className="btn o" onClick={() => window.open(waLink(`Hello ScentbyBecca, I curated this combo:\n${slots.map(line).join("\n")}\nTotal: ${ngn(total)}\nPlease confirm availability.`), "_blank", "noopener,noreferrer")}>Send on WhatsApp</button></div></>}
-    </div>
+    </div></>
   );
 }

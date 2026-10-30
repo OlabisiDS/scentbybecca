@@ -19,9 +19,9 @@ export const ratingText = (p: Product, k: "longevity" | "projection" | "sillage"
   const n = p[k]; return n ? `${n}/10` : "-";
 };
 
-export type Review = { id: string; target: string; name: string; rating: number; text: string; images: string[]; status: "pending" | "visible" | "hidden"; reply: string; seen: boolean; createdAt: number };
+export type Review = { id: string; target: string; name: string; rating: number; text: string; images: string[]; status: "pending" | "visible" | "hidden"; reply: string; seen: boolean; createdAt: number; sortOrder: number | null };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const rowToReview = (r: any): Review => ({ id: r.id, target: r.target, name: r.name, rating: r.rating, text: r.text, images: r.images || [], status: r.status, reply: r.reply, seen: r.seen, createdAt: Date.parse(r.created_at) });
+export const rowToReview = (r: any): Review => ({ id: r.id, target: r.target, name: r.name, rating: r.rating, text: r.text, images: r.images || [], status: r.status, reply: r.reply, seen: r.seen, createdAt: Date.parse(r.created_at), sortOrder: r.sort_order ?? null });
 export type Area = { id: string; zoneId: string; name: string; fee: number | null; enabled: boolean; sort: number };
 export type Zone = { id: string; name: string; fee: number; enabled: boolean; sort: number; areas: Area[] };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,3 +50,12 @@ export const addLine = (c: CartLine[], pid: string, vid: string, qty: number) =>
   const l = c.find((x) => x.pid === pid && x.vid === vid); const q = Math.min(20, (l ? l.qty : 0) + qty);
   return l ? c.map((x) => (x === l ? { ...x, qty: q } : x)) : [...c, { pid, vid, qty: q }];
 };
+// Pinned reviews (those with an order number) always come first, in the admin's order. The rest follow, newest first.
+export const sortReviews = <T extends { sortOrder: number | null; createdAt: number }>(l: T[]) =>
+  [...l].sort((a, b) => (a.sortOrder !== null && b.sortOrder !== null ? a.sortOrder - b.sortOrder : a.sortOrder !== null ? -1 : b.sortOrder !== null ? 1 : b.createdAt - a.createdAt));
+export type HeroSlide = { id: string; title: string; kind: "image" | "video"; imageUrl: string; imageWideUrl: string; videoUrl: string; posterUrl: string; href: string; sort: number; active: boolean; startsAt: string | null; endsAt: string | null };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const rowToSlide = (r: any): HeroSlide => ({ id: r.id, title: r.title, kind: r.kind, imageUrl: r.image_url, imageWideUrl: r.image_wide_url, videoUrl: r.video_url, posterUrl: r.poster_url, href: r.href, sort: r.sort, active: r.active, startsAt: r.starts_at, endsAt: r.ends_at });
+export const slideLive = (s: HeroSlide, now = Date.now()) => s.active && (!s.startsAt || Date.parse(s.startsAt) <= now) && (!s.endsAt || Date.parse(s.endsAt) >= now);
+export type Announcement = { id: string; text: string; href: string; sort: number; active: boolean };
+export const PAGE_KEYS: [string, string][] = [["shop", "Shop and categories"], ["worth", "Worth Discovering"], ["favourites", "Favourites"], ["combo", "Curate a combo"], ["cart", "Cart and checkout"], ["track", "Track your order"], ["about", "About us"], ["contact", "Contact us"], ["delivery", "Delivery and refund policy"], ["reviews", "Customer reviews"], ["privacy", "Privacy"]];

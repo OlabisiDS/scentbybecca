@@ -2,7 +2,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUp, Boxes, ChevronDown, ChevronRight, Droplet, Gem, Gift, Heart, Home, Info, Instagram, Menu, Package, Phone, Shuffle, ShoppingBag, Sparkles, SprayCan, Star, Tag, Truck, Wind, X, PackageSearch, type LucideIcon } from "lucide-react";
+import { ArrowUp, Boxes, ChevronDown, ChevronRight, Droplet, Gem, Gift, Heart, Home, Info, Instagram, Menu, Package, Phone, Shuffle, ShoppingBag, Sparkles, SprayCan, Search, Star, Tag, Truck, Wind, X, PackageSearch, type LucideIcon } from "lucide-react";
+import AnnouncementBar from "./Announcements";
+import MiniCart from "./MiniCart";
+import ScrollMemory from "./ScrollMemory";
+import SearchOverlay from "./SearchOverlay";
 import Setup from "./Setup";
 import { PromoBar, PromoPopup } from "./Promos";
 import { CATEGORIES, INSTAGRAM_URL, LOGO, TIKTOK_URL, WHATSAPP_NUMBER } from "@/lib/config";
@@ -72,7 +76,7 @@ function Drawer({ close }: { close: () => void }) {
   );
 }
 function Header() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false), [find, setFind] = useState(false);
   const [cart] = useCart(); const [favs] = useFavs();
   const n = cart.reduce((a, l) => a + l.qty, 0);
   return (
@@ -81,11 +85,13 @@ function Header() {
         <button className="ib" aria-label="Open menu" onClick={() => setOpen(true)}><Menu size={26} strokeWidth={1.5} /></button>
         <Link href="/" aria-label="ScentbyBecca home"><img src={LOGO} alt="ScentbyBecca, a scent that lingers" width={100} height={44} /></Link>
         <div style={{ display: "flex" }}>
+          <button className="ib" aria-label="Search" onClick={() => setFind(true)}><Search size={23} strokeWidth={1.5} /></button>
           <Link className={"ib" + (favs.length ? " full" : "")} href="/favourites" aria-label={`Favourites, ${favs.length} saved`}><Heart size={24} strokeWidth={1.5} fill={favs.length ? "currentColor" : "none"} />{favs.length > 0 && <span className="cnt" key={favs.length}>{favs.length}</span>}</Link>
           <Link className={"ib" + (n ? " full" : "")} href="/cart" aria-label={`Cart, ${n} items`}><ShoppingBag size={24} strokeWidth={1.5} fill={n ? "currentColor" : "none"} />{n > 0 && <span className="cnt" key={n}>{n}</span>}</Link>
         </div>
       </header>
       {open && <Drawer close={() => setOpen(false)} />}
+      {find && <SearchOverlay onClose={() => setFind(false)} />}
     </>
   );
 }
@@ -102,7 +108,7 @@ function Footer() {
   return (
     <footer className="ft2"><div className="wrap">
       <img src={LOGO} alt="ScentbyBecca" />
-      <p style={{ margin: "0 0 14px", maxWidth: 360 }}>Fragrances for every taste and budget. A scent that lingers.</p>
+      <p style={{ margin: "0 0 14px", maxWidth: 360 }}>Luxurious and affordable fragrances. A scent that lingers.</p>
       <a className="btn fit" href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer"><WaIcon s={20} />Chat with us on WhatsApp</a>
       <div className="ftcols">
         <div><h3>Shop</h3><Link href="/shop">Shop all</Link><Link href="/worth-discovering">Worth Discovering</Link><Link href="/combo">Curate a combo</Link><Link href="/favourites">Favourites</Link></div>
@@ -121,5 +127,5 @@ function Gate({ children }: { children: React.ReactNode }) {
 export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   if (path.startsWith("/admin") || path.startsWith("/reset-password")) return <>{children}</>;
-  return <StoreProvider><NavProgress /><PromoBar /><Header /><main><Gate>{children}</Gate></main><Footer /><Fab /><PromoPopup /></StoreProvider>;
+  return <StoreProvider><NavProgress /><ScrollMemory /><AnnouncementBar /><PromoBar /><Header /><main><Gate>{children}</Gate></main><Footer /><Fab /><PromoPopup /><MiniCart /></StoreProvider>;
 }
