@@ -52,7 +52,7 @@ export default function Slides() {
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}><h1 style={{ margin: 0 }}>Hero slides</h1><button className="btn fit" onClick={() => setF(blank)}><Plus size={18} />New slide</button></div>
-      <p className="muted small">The big pictures at the top of the home page, in this order. If no slide is live, the home page shows the old video instead.</p>
+      <p className="muted small">The big pictures at the top of the home page, in this order. The home video always plays first, then your slides follow it. The words on the home page (brand name, tagline and button) stay in place over every slide.</p>
       {msg && <div className="fb" role="status">{msg}</div>}{err && <p className="err" role="alert">{err}</p>}
       {items === null ? <p className="muted">Loading...</p> : items.length === 0 ? <p>No slides yet.</p> : items.map((s, i) => (
         <div className="arow" key={s.id}>

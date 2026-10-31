@@ -55,12 +55,12 @@ export default function VideoAdmin() {
       </div>
       <h2 style={{ fontSize: 16, margin: "20px 0 8px" }}>Your videos</h2>
       {items === null ? <p className="muted">Loading...</p> : <>
-        <div className="cardx"><b>Original video</b> {!items.some((v) => v.active) && <span className="tag g">Published</span>}<p className="small muted">The video the site launched with. Old home videos only show when there are no hero slides.</p>{items.some((v) => v.active) && <button className="btn o sm fit" onClick={() => publish(null)}>Use the original video</button>}</div>
+        <div className="cardx"><b>Original video</b> {!items.some((v) => v.active) && <span className="tag g">Published</span>}<p className="small muted">The video the site launched with. The video you pick here is the one that plays first on the home page.</p>{items.some((v) => v.active) && <button className="btn o sm fit" onClick={() => publish(null)}>Use the original video</button>}</div>
         {items.map((v) => (
           <div className="cardx" key={v.id}>
             <b>{v.title}</b> {v.active && <span className="tag g">Published</span>}
             <video src={v.videoUrl} poster={v.posterUrl || undefined} controls muted playsInline preload="none" style={{ width: "100%", maxHeight: 260, background: "#000", margin: "8px 0" }} />
-            <div className="acts">{!v.active && <button className="btn sm fit" onClick={() => publish(v.id)}>Use as old home video</button>}
+            <div className="acts">{!v.active && <button className="btn sm fit" onClick={() => publish(v.id)}>Use as the first home video</button>}
               <button className="btn red sm fit" onClick={async () => { if (confirm(`Delete "${v.title}" permanently?${v.active ? " The original video will be shown instead." : ""}`)) { try { await api("hero-videos", { method: "DELETE", query: `id=${v.id}` }); load(); } catch (e) { setErr((e as Error).message); } } }}>Delete</button></div>
           </div>
         ))}</>}

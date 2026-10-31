@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, MessageCircle, ShieldCheck, Star, Truck, Image as ImgIcon } from "lucide-react";
+import { ArrowRight, MessageCircle, Shuffle, ShieldCheck, Star, Truck, Image as ImgIcon } from "lucide-react";
 import HeroSlides from "@/components/HeroSlides";
 import LoopRow from "@/components/LoopRow";
 import ProductCard from "@/components/ProductCard";
@@ -9,6 +9,7 @@ import Reveal from "@/components/Reveal";
 import { ReviewsSection } from "@/components/Reviews";
 import { CATEGORIES, HERO_POSTER, HERO_VIDEO, STORY, STORY_CLOSING, STORY_TITLE, WHATSAPP_NUMBER } from "@/lib/config";
 import { useStore } from "@/lib/store";
+import type { HeroSlide } from "@/lib/types";
 import { rankBy } from "@/lib/util";
 
 const FEATURES: { slug: string; line: string }[] = [
@@ -17,10 +18,12 @@ const FEATURES: { slug: string; line: string }[] = [
   { slug: "perfume-oils", line: "Perfume oils to layer and wear your way." },
 ];
 export default function HomePage() {
-  const { products, covers, shelves, video, slides, ready } = useStore();
+  const { products, covers, shelves, video, slides, headers, ready } = useStore();
   const [tick, setTick] = useState<Record<string, number>>({});
   const picks = rankBy(products.filter((p) => p.featured), shelves["worth"]).slice(0, 10);
   const thumbs = (slug: string) => (covers[slug]?.length ? covers[slug] : ([products.find((p) => p.category === slug && p.images[0])?.images[0]].filter(Boolean) as string[]));
+  // The original home video is always the first slide. Slides added in the admin follow it.
+  const first: HeroSlide = { id: "first-video", title: "ScentbyBecca", kind: "video", imageUrl: "", imageWideUrl: "", videoUrl: video?.videoUrl || HERO_VIDEO, posterUrl: video?.posterUrl || HERO_POSTER, href: "", sort: -1, active: true, startsAt: null, endsAt: null };
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const rot = CATEGORIES.filter((c) => (covers[c.slug]?.length || 0) > 1).map((c) => c.slug);
@@ -33,31 +36,16 @@ export default function HomePage() {
   }, [covers]);
   return (
     <>
-      {slides.length > 0 ? (
-        <>
-          <HeroSlides slides={slides} />
-          <section className="intro">
-            <div className="eyebrow">The Scents by Becca Brand</div>
-            <p className="accent">Find a scent that stays with you.</p>
-            <p>Browse designer, affordable and niche fragrances, oils and gift sets.</p>
-            <Link className="btn fit" href="/shop">Explore fragrances</Link>
-          </section>
-        </>
-      ) : (
-        <section className="hero" style={{ backgroundImage: `url(${video?.posterUrl || HERO_POSTER})` }}>
-          <video key={video?.id || "default"} className="hv" autoPlay muted loop playsInline poster={video?.posterUrl || HERO_POSTER} preload="metadata" aria-hidden="true"><source src={video?.videoUrl || HERO_VIDEO} type={video?.videoUrl?.endsWith(".webm") ? "video/webm" : "video/mp4"} /></video>
-          <div className="ov" aria-hidden="true" />
-          <div className="in">
-            <h1>The Scents by Becca Brand</h1>
-            <p className="accent">Find a scent that stays with you.</p>
-            <p className="lead">Browse designer, affordable and niche fragrances, oils and gift sets.</p>
-            <Link className="btn" href="/shop">Explore fragrances</Link>
-          </div>
-        </section>
-      )}
+      <HeroSlides slides={[first, ...slides]}>
+        <h1>The Scents by Becca Brand</h1>
+        <p className="accent">Find a scent that stays with you.</p>
+        <p className="lead">Browse designer, affordable and niche fragrances, oils and gift sets.</p>
+        <Link className="btn" href="/shop">Explore fragrances</Link>
+      </HeroSlides>
       <div className="wrap">
-        <section className="sec"><Reveal><h2>Worth Discovering</h2></Reveal>
-          {!ready ? <div className="grid">{[0, 1].map((i) => <div key={i} className="card"><div className="ph" /></div>)}</div> : picks.length === 0 ? <p className="muted" style={{ textAlign: "center" }}>Hand-picked fragrances will appear here soon.</p> : <LoopRow href="/worth-discovering" label="View all">{picks.map((p) => <ProductCard key={p.id} p={p} />)}</LoopRow>}
+        <section className="sec">
+          <Reveal><div className="hrow"><h2>Worth Discovering</h2><Link className="ib" href="/worth-discovering" aria-label="View all Worth Discovering"><ArrowRight size={24} strokeWidth={1.5} /></Link></div></Reveal>
+          {!ready ? <div className="grid">{[0, 1].map((i) => <div key={i} className="card"><div className="ph" /></div>)}</div> : picks.length === 0 ? <p className="muted">Hand-picked fragrances will appear here soon.</p> : <LoopRow auto>{picks.map((p) => <ProductCard key={p.id} p={p} />)}</LoopRow>}
         </section>
         <section className="sec"><Reveal><h2>Shop by category</h2></Reveal>
           <div className="crows">
@@ -79,7 +67,7 @@ export default function HomePage() {
             {FEATURES.map((f) => { const c = CATEGORIES.find((x) => x.slug === f.slug)!, img = thumbs(f.slug)[0]; return (
               <Reveal key={f.slug}><div className="fcard"><div className="fi">{img && <img src={img} alt="" loading="lazy" />}</div><div className="fb2"><h3>{c.name}</h3><p>{f.line}</p><Link className="btn fit sm" href={`/shop?cat=${f.slug}`}>Shop now</Link></div></div></Reveal>
             ); })}
-            <Reveal><div className="fcard"><div className="fi" /><div className="fb2"><h3>Curate your own combo</h3><p>Pick your categories and budget, then let us shuffle a combination for you.</p><Link className="btn fit sm" href="/combo">Try it</Link></div></div></Reveal>
+            <Reveal><div className="fcard"><div className="fi">{headers["combo-card"] ? <img src={headers["combo-card"]} alt="" loading="lazy" /> : <span className="fi-ph" aria-hidden="true"><Shuffle size={34} strokeWidth={1.5} /></span>}</div><div className="fb2"><h3>Curate your own combo</h3><p>Pick your categories and budget, then let us shuffle a combination for you.</p><Link className="btn fit sm" href="/combo">Try it</Link></div></div></Reveal>
           </div>
         </section>
       </div>

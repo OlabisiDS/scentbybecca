@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: { default: "ScentbyBecca | A scent that lingers", template: "%s | ScentbyBecca" },
   description: "Luxurious and affordable fragrances from ScentbyBecca. Find your scent. Own your presence.",
-  openGraph: { siteName: "ScentbyBecca", type: "website", images: [{ url: "/og.png", width: 1200, height: 630 }] },
+  openGraph: { siteName: "ScentbyBecca", type: "website", images: [{ url: "/og.jpg", width: 1200, height: 630 }] },
   twitter: { card: "summary_large_image" },
 };
 export const viewport: Viewport = { themeColor: "#171512", width: "device-width", initialScale: 1 };

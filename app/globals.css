@@ -175,3 +175,18 @@ main{min-height:70vh;overflow-x:hidden}
 }
 @media(prefers-reduced-motion:reduce){.hero .hv{display:none}.drawer{animation:none}.hs-track{transition:none}.hs-bars button.on span::after{animation:none}}
 .loop-row>*{display:flex}.loop-row>*>*{width:100%}
+
+/* ---- add this whole block at the very bottom of app/globals.css ---- */
+.sec .hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.sec .hrow h2{font:italic 500 clamp(28px,7.5vw,38px)/1.1 var(--display);text-align:left;margin:0}
+.sec .hrow h2::after{display:none}
+.hs-slide{aspect-ratio:3/4;max-height:88vh}
+@media(min-width:800px){.hs-slide{aspect-ratio:16/8;max-height:78vh}}
+.hs-scrim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(23,21,18,.2) 0%,rgba(23,21,18,0) 30%,rgba(23,21,18,.84) 100%)}
+.hs-text{position:absolute;left:0;right:0;bottom:34px;padding:0 16px;max-width:1100px;margin:0 auto;color:var(--ivory);pointer-events:none;text-shadow:0 1px 12px rgba(0,0,0,.45)}
+.hs-text a,.hs-text button{pointer-events:auto}
+.hs-text h1{font:600 clamp(22px,5.6vw,34px)/1.1 var(--display);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}
+.hs-text .accent{margin:0 0 8px;font-size:clamp(26px,6.6vw,38px)}
+.hs-text .lead{margin:0 0 14px;color:var(--cream);max-width:440px;font-size:17px;line-height:1.4}
+.hs-text .btn{max-width:340px;text-shadow:none}
+.fi-ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold)}
