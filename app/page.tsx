@@ -36,7 +36,7 @@ export default function HomePage() {
   }, [covers]);
   return (
     <>
-      <HeroSlides slides={[first, ...slides]}>
+      <HeroSlides slides={[first, ...slides]} textSlideId="first-video">
         <h1>The Scents by Becca Brand</h1>
         <p className="accent">Find a scent that stays with you.</p>
         <p className="lead">Browse designer, affordable and niche fragrances, oils and gift sets.</p>

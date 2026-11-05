@@ -1,15 +1,19 @@
 export type Variant = { id: string; label: string; price: number; available: boolean };
 export type Status = "draft" | "active" | "archived";
+export type Colour = { id: string; label: string; available: boolean };
+// Joins sizes with variants (colours or versions) into the options a customer picks from. With no variants, the sizes are used as they are.
+export const expandVariants = (sizes: Variant[], colours?: Colour[]): Variant[] =>
+  !colours || !colours.length ? sizes : sizes.flatMap((s) => colours.map((c) => ({ id: `${s.id}~${c.id}`, label: [s.label, c.label].filter(Boolean).join(" / "), price: s.price, available: s.available && c.available })));
 export const CONCENTRATIONS = ["Extrait de Parfum", "Eau de Parfum", "Eau de Toilette", "Eau de Cologne", "Perfume oil", "Body mist", "Other"];
 export const GRADES = ["Fair", "Moderate", "Good", "Very Good", "Excellent"];
 export type Product = {
   id: string; slug: string; name: string; brand: string; category: string; sub: string; audience: "" | "Men" | "Women" | "Unisex";
   concentration: string; description: string; notes: string; ratingMode: "number" | "grade";
   longevity: number | null; projection: number | null; sillage: number | null; longevityGrade: string; projectionGrade: string; sillageGrade: string;
-  images: string[]; variants: Variant[]; combo: boolean; featured: boolean; status: Status; createdAt: number; updatedAt: number;
+  images: string[]; variants: Variant[]; sizes: Variant[]; colours: Colour[]; combo: boolean; featured: boolean; status: Status; createdAt: number; updatedAt: number;
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const rowToProduct = (r: any): Product => ({ id: r.id, slug: r.slug, name: r.name, brand: r.brand, category: r.category, sub: r.sub, audience: r.audience, concentration: r.concentration, description: r.description, notes: r.notes, ratingMode: r.rating_mode === "grade" ? "grade" : "number", longevity: r.longevity, projection: r.projection, sillage: r.sillage, longevityGrade: r.longevity_grade || "", projectionGrade: r.projection_grade || "", sillageGrade: r.sillage_grade || "", images: r.images || [], variants: r.variants || [], combo: r.combo, featured: r.featured, status: r.status, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
+export const rowToProduct = (r: any): Product => ({ id: r.id, slug: r.slug, name: r.name, brand: r.brand, category: r.category, sub: r.sub, audience: r.audience, concentration: r.concentration, description: r.description, notes: r.notes, ratingMode: r.rating_mode === "grade" ? "grade" : "number", longevity: r.longevity, projection: r.projection, sillage: r.sillage, longevityGrade: r.longevity_grade || "", projectionGrade: r.projection_grade || "", sillageGrade: r.sillage_grade || "", images: r.images || [], variants: expandVariants(r.variants || [], r.colours), sizes: r.variants || [], colours: r.colours || [], combo: r.combo, featured: r.featured, status: r.status, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
 export const isOut = (p: Product) => !p.variants.some((v) => v.available);
 export const firstAvail = (p: Product) => p.variants.find((v) => v.available) ?? p.variants[0];
 export const fromPrice = (p: Product) => { const l = p.variants.filter((v) => v.available); return Math.min(...(l.length ? l : p.variants).map((v) => v.price)); };

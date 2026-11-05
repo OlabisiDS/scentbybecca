@@ -36,9 +36,9 @@ export default function ProductCard({ p }: { p: Product }) {
       </button>
       <Link href={`/products/${p.slug}`} aria-label={p.name}><CardImage p={p} /></Link>
       <Link href={`/products/${p.slug}`} className="pn">{p.name}</Link>
-      <div className="pm">{p.brand}{p.variants.length === 1 && p.variants[0].label ? `${p.brand ? ", " : ""}${p.variants[0].label}` : p.variants.length > 1 ? `${p.brand ? ", " : ""}several sizes` : ""}</div>
+      <div className="pm">{p.brand}{p.variants.length === 1 && p.variants[0].label ? `${p.brand ? ", " : ""}${p.variants[0].label}` : p.variants.length > 1 ? `${p.brand ? ", " : ""}several options` : ""}</div>
       <div className="pp">{multiPrice(p) ? "From " : ""}{ngn(fromPrice(p))} {out && <span className="tag r">Out of stock</span>}</div>
-      {out ? <button className="btn o" disabled>Out of stock</button> : many ? <Link className="btn o" href={`/products/${p.slug}`}>Choose size</Link> : (
+      {out ? <button className="btn o" disabled>Out of stock</button> : many ? <Link className="btn o" href={`/products/${p.slug}`}>Choose option</Link> : (
         <button className="btn o" onClick={() => { setCart((c) => addLine(c, p.id, firstAvail(p).id, 1)); openMiniCart(); }}>Add to cart</button>
       )}
     </div>

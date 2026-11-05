@@ -190,3 +190,5 @@ main{min-height:70vh;overflow-x:hidden}
 .hs-text .lead{margin:0 0 14px;color:var(--cream);max-width:440px;font-size:17px;line-height:1.4}
 .hs-text .btn{max-width:340px;text-shadow:none}
 .fi-ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold)}
+.hs-bars{display:none}
+.hs-text{bottom:22px}

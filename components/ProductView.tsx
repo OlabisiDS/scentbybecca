@@ -58,7 +58,7 @@ export default function ProductView({ slug }: { slug: string }) {
           {copied && <div className="fb" role="status">Link copied.</div>}
           <div className="price">{ngn(sel.price)}</div>
           <div className="small" style={{ margin: "6px 0 12px", display: "flex", alignItems: "center", gap: 6, color: out ? "var(--red)" : "var(--green)" }}>{!out && <Check size={16} strokeWidth={1.5} />}<span style={{ font: "700 11px var(--display)", letterSpacing: ".18em", textTransform: "uppercase" }}>{out ? "Out of stock" : "In stock"}</span></div>
-          {p.variants.length > 1 && <><span className="lab" style={{ margin: 0 }}>Size</span><div className="sizes" role="radiogroup" aria-label="Size">{p.variants.map((v) => <button key={v.id} role="radio" aria-checked={v.id === sel.id} className={"sz" + (v.id === sel.id ? " on" : "")} disabled={!v.available} onClick={() => setVid(v.id)}>{v.label || "Standard"}<br />{ngn(v.price)}</button>)}</div></>}
+          {p.variants.length > 1 && <><span className="lab" style={{ margin: 0 }}>{p.colours.length ? "Choose your option" : "Size"}</span><div className="sizes" role="radiogroup" aria-label="Size">{p.variants.map((v) => <button key={v.id} role="radio" aria-checked={v.id === sel.id} className={"sz" + (v.id === sel.id ? " on" : "")} disabled={!v.available} onClick={() => setVid(v.id)}>{v.label || "Standard"}<br />{ngn(v.price)}</button>)}</div></>}
           {p.variants.length === 1 && sel.label && <div className="muted">{sel.label}{p.concentration ? `, ${p.concentration}` : ""}</div>}
           {out ? <p className="warn">This item is out of stock right now. Message us on WhatsApp to ask when it returns.</p> : (<>
             <div className="buy">

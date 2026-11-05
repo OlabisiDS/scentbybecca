@@ -8,8 +8,8 @@ function Wrap({ s, children }: { s: HeroSlide; children: React.ReactNode }) {
   if (!s.href) return <div>{children}</div>;
   return /^https?:/.test(s.href) ? <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.title || "Open"}>{children}</a> : <Link href={s.href} aria-label={s.title || "Open"}>{children}</Link>;
 }
-// The big slide show at the top of the home page. The words passed as children stay in place over every slide.
-export default function HeroSlides({ slides, children }: { slides: HeroSlide[]; children?: React.ReactNode }) {
+// The big slide show at the top of the home page. The words passed as children show only on the slide named by textSlideId.
+export default function HeroSlides({ slides, children, textSlideId }: { slides: HeroSlide[]; children?: React.ReactNode; textSlideId?: string }) {
   const [i, setI] = useState(0), [paused, setPaused] = useState(false), [reduced, setReduced] = useState(false);
   const x0 = useRef(0);
   useEffect(() => { setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches); }, []);
@@ -33,11 +33,10 @@ export default function HeroSlides({ slides, children }: { slides: HeroSlide[]; 
                 ? (k === i && !reduced ? <video src={s.videoUrl} poster={s.posterUrl || undefined} autoPlay muted loop playsInline preload="metadata" aria-hidden="true" /> : s.posterUrl ? <img src={s.posterUrl} alt="" /> : null)
                 : <picture>{s.imageWideUrl && <source media="(min-width:800px)" srcSet={s.imageWideUrl} />}<img src={s.imageUrl} alt={s.title} loading={k === 0 ? "eager" : "lazy"} /></picture>}
             </Wrap>
+            {children && s.id === textSlideId && <><aside className="hs-scrim" aria-hidden="true" /><aside className="hs-text">{children}</aside></>}
           </div>
         ))}
       </div>
-      <div className="hs-scrim" aria-hidden="true" />
-      {children && <div className="hs-text">{children}</div>}
       {slides.length > 1 && <div className="hs-bars">{slides.map((s, k) => <button key={s.id} className={k === i ? "on" : ""} aria-label={`Show slide ${k + 1}`} aria-current={k === i} onClick={() => setI(k)}><span /></button>)}</div>}
     </section>
   );

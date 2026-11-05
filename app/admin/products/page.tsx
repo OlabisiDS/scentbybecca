@@ -15,7 +15,7 @@ export default function Products() {
   const load = useCallback(() => api("products").then((j) => setItems(j.items)).catch((e) => setMsg(e.message)), [api]);
   useEffect(() => { load(); }, [load]);
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(""), 3000); };
-  const save = async (p: Product, patch: Partial<Product>, m: string) => { try { await api("products", { method: "POST", body: { ...p, ...patch } }); flash(m); load(); refresh(); } catch (e) { flash((e as Error).message); } };
+  const save = async (p: Product, patch: Partial<Product>, m: string) => { try { await api("products", { method: "POST", body: { ...p, variants: p.sizes, ...patch } }); flash(m); load(); refresh(); } catch (e) { flash((e as Error).message); } };
   const del = async (p: Product) => { if (!confirm(`Permanently delete "${p.name}"? This cannot be undone. To keep it for later, use Hide from store instead.`)) return; try { await api("products", { method: "DELETE", query: `id=${p.id}` }); flash("Product deleted."); load(); } catch (e) { flash((e as Error).message); } };
   const list = (items || []).filter((p) => (!st || p.status === st) && (!q || (p.name + " " + p.brand).toLowerCase().includes(q.toLowerCase())));
   return (
@@ -34,7 +34,7 @@ export default function Products() {
             <div className="acts">
               <Link className="btn o sm fit" href={`/admin/edit/${p.id}`}>Edit</Link>
               {p.status === "active" ? <button className="btn o sm fit" onClick={() => save(p, { status: "archived" }, "Product hidden from the store.")}>Hide from store</button> : <button className="btn o sm fit" onClick={() => save(p, { status: "active" }, "Product is now live.")}>Publish</button>}
-              <button className="btn o sm fit" onClick={() => save(p, { variants: p.variants.map((v) => ({ ...v, available: isOut(p) })) }, isOut(p) ? "Back in stock." : "Marked out of stock.")}>{isOut(p) ? "Back in stock" : "Mark out of stock"}</button>
+              <button className="btn o sm fit" onClick={() => save(p, { variants: p.sizes.map((v) => ({ ...v, available: isOut(p) })), colours: p.colours.map((c) => ({ ...c, available: isOut(p) })) }, isOut(p) ? "Back in stock." : "Marked out of stock.")}>{isOut(p) ? "Back in stock" : "Mark out of stock"}</button>
               <Link className="btn o sm fit" href={`/admin/edit/new?from=${p.id}`}>Duplicate</Link>
               <button className="btn red sm fit" onClick={() => del(p)}>Delete</button>
             </div>

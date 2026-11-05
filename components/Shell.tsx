@@ -8,6 +8,7 @@ import MiniCart from "./MiniCart";
 import ScrollMemory from "./ScrollMemory";
 import SearchOverlay from "./SearchOverlay";
 import Setup from "./Setup";
+import Sheet from "./Sheet";
 import { PromoBar, PromoPopup } from "./Promos";
 import { CATEGORIES, INSTAGRAM_URL, LOGO, TIKTOK_URL, WHATSAPP_NUMBER } from "@/lib/config";
 import { useCart, useFavs } from "@/lib/hooks";
@@ -97,12 +98,24 @@ function Header() {
 }
 function Fab() {
   const path = usePathname();
-  const [href, setHref] = useState(`https://wa.me/${WHATSAPP_NUMBER}`);
-  useEffect(() => {
-    const t = path.startsWith("/products") ? `Hello ScentbyBecca, I have a question about this product: ${window.location.href}` : "Hello ScentbyBecca, I have an enquiry.";
-    setHref(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(t)}`);
-  }, [path]);
-  return <a className="fab" href={href} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp"><WaIcon /></a>;
+  const { products } = useStore();
+  const [name, setName] = useState(""), [ask, setAsk] = useState(false), [draft, setDraft] = useState("");
+  useEffect(() => { try { setName(localStorage.getItem("sbb_name") || ""); } catch { /* ignore */ } }, []);
+  const prod = path.startsWith("/products/") ? products.find((p) => p.slug === path.split("/")[2]) : undefined;
+  const link = (n: string) => {
+    const about = prod ? `I'd like to enquire about ${prod.name}.` : "I'd like to make an enquiry.";
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi, ScentbyBecca!\n\nMy name is ${n.trim() || "[your name]"}, and I'm reaching out from your website.\n\n${about}`)}`;
+  };
+  const go = (n: string) => { const v = n.trim(); if (v) { try { localStorage.setItem("sbb_name", v); } catch { /* ignore */ } setName(v); } setAsk(false); window.open(link(v), "_blank", "noopener,noreferrer"); };
+  return (
+    <>
+      <a className="fab" href={link(name)} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" onClick={(e) => { if (!name) { e.preventDefault(); setAsk(true); } }}><WaIcon /></a>
+      {ask && <Sheet title="Before we chat" onClose={() => setAsk(false)}>
+        <label className="lab" htmlFor="wn">Your name</label><input id="wn" className="in-t" autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go(draft)} autoComplete="given-name" />
+        <div className="row2" style={{ marginTop: 16 }}><button className="btn o" onClick={() => go("")}>Skip</button><button className="btn" onClick={() => go(draft)}>Open WhatsApp</button></div>
+      </Sheet>}
+    </>
+  );
 }
 function Footer() {
   return (

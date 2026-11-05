@@ -23,10 +23,11 @@ function cleanProduct(b: any) {
   const description = String(b.description || "").replace(/\r/g, "").trim(); if (description.length > 2000) throw new Error("The description is too long.");
   const notes = String(b.notes || "").replace(/\r/g, "").trim(); if (notes.length > 1000) throw new Error("The notes are too long (1000 characters at most).");
   const mode = b.ratingMode === "grade" ? "grade" : "number";
+  const colours = (Array.isArray(b.colours) ? b.colours : []).slice(0, 12).map((c: any, i: number) => ({ id: String(c.id || "c" + (i + 1)).slice(0, 20), label: String(c.label || "").trim().slice(0, 40), available: c.available !== false })).filter((c: any) => c.label);
   return { name, brand: String(b.brand || "").trim().slice(0, 80), category, sub, audience: ["Men", "Women", "Unisex"].includes(b.audience) ? b.audience : "", concentration: String(b.concentration || "").slice(0, 40), description, notes, rating_mode: mode,
     longevity: mode === "number" ? rate(b.longevity) : null, projection: mode === "number" ? rate(b.projection) : null, sillage: mode === "number" ? rate(b.sillage) : null,
     longevity_grade: mode === "grade" ? grade(b.longevityGrade) : "", projection_grade: mode === "grade" ? grade(b.projectionGrade) : "", sillage_grade: mode === "grade" ? grade(b.sillageGrade) : "",
-    images, variants, combo: b.combo !== false, featured: b.featured === true, status: ["draft", "active", "archived"].includes(b.status) ? b.status : "draft" };
+    images, variants, colours, combo: b.combo !== false, featured: b.featured === true, status: ["draft", "active", "archived"].includes(b.status) ? b.status : "draft" };
 }
 function cleanPromo(b: any) {
   const headline = String(b.headline || "").trim(); if (headline.length < 2 || headline.length > 120) throw new Error("Enter a headline (2 to 120 characters).");

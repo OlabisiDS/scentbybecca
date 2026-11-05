@@ -1,6 +1,6 @@
 import { calc } from "@/lib/calc";
 import { json, limited, notify, svc } from "@/lib/server";
-import { rowToOrder, type Variant } from "@/lib/types";
+import { expandVariants, rowToOrder, type Variant } from "@/lib/types";
 
 export async function POST(req: Request) {
   if (limited(req, "order", 10, 3_600_000)) return json({ error: "Too many orders from this connection. Please try again later." }, 429);
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const { data: prods } = await db.from("products").select("*").in("id", [...new Set(items.map((i) => String(i.pid)))]).eq("status", "active");
   const out = []; let subtotal = 0;
   for (const it of items) {
-    const p = prods?.find((x) => x.id === it.pid), v = (p?.variants as Variant[] | undefined)?.find((x) => x.id === it.vid), qty = Math.floor(Number(it.qty));
+    const p = prods?.find((x) => x.id === it.pid), v = (p ? expandVariants(p.variants as Variant[], p.colours) : undefined)?.find((x) => x.id === it.vid), qty = Math.floor(Number(it.qty));
     if (!p || !v || !v.available || !(qty >= 1 && qty <= 20)) return json({ error: `"${p?.name || "An item"}" is no longer available. Please update your cart.` }, 409);
     out.push({ pid: p.id, vid: v.id, name: p.name, variant: v.label, price: Number(v.price), qty }); subtotal += Number(v.price) * qty;
   }

@@ -7,7 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useAdmin } from "@/components/AdminShell";
 import { CATEGORIES } from "@/lib/config";
 import { readImage } from "@/lib/image";
-import { CONCENTRATIONS, GRADES, Product, Variant } from "@/lib/types";
+import { CONCENTRATIONS, Colour, GRADES, Product, Variant } from "@/lib/types";
 
 type Img = { key: string; url: string; preview: string; status: "uploading" | "done" | "error"; error?: string; file?: File };
 const blank = { name: "", brand: "", category: CATEGORIES[0].slug, sub: "", audience: "", concentration: "", description: "", notes: "", price: "", label: "", longevity: "", projection: "", sillage: "", longevityGrade: "", projectionGrade: "", sillageGrade: "" };
@@ -17,7 +17,7 @@ function Form() {
   const { api, refresh } = useAdmin();
   const isNew = id === "new";
   const [f, setF] = useState(blank), [imgs, setImgs] = useState<Img[]>([]), [feat, setFeat] = useState(false), [combo, setCombo] = useState(true), [avail, setAvail] = useState(true), [mode, setMode] = useState<"number" | "grade">("number");
-  const [multi, setMulti] = useState(false), [vars, setVars] = useState<Variant[]>([]);
+  const [multi, setMulti] = useState(false), [vars, setVars] = useState<Variant[]>([]), [hasCol, setHasCol] = useState(false), [cols, setCols] = useState<Colour[]>([]);
   const [err, setErr] = useState<Record<string, string>>({}), [dirty, setDirty] = useState(false), [busy, setBusy] = useState(false), [state, setState] = useState<"load" | "ok" | "none">("load");
   const loaded = useRef(false);
   useEffect(() => {
@@ -26,9 +26,10 @@ function Form() {
     api("products").then((j) => {
       const p: Product | undefined = j.items.find((x: Product) => x.id === (isNew ? from : id));
       if (!p) { setState("none"); return; }
-      setF({ name: isNew ? p.name + " (copy)" : p.name, brand: p.brand, category: p.category, sub: p.sub, audience: p.audience, concentration: p.concentration, description: p.description, notes: p.notes, price: String(p.variants[0]?.price ?? ""), label: p.variants[0]?.label ?? "", longevity: p.longevity ? String(p.longevity) : "", projection: p.projection ? String(p.projection) : "", sillage: p.sillage ? String(p.sillage) : "", longevityGrade: p.longevityGrade, projectionGrade: p.projectionGrade, sillageGrade: p.sillageGrade });
-      setMode(p.ratingMode); setImgs(p.images.map((u) => ({ key: "e" + seq++, url: u, preview: u, status: "done" as const }))); setFeat(p.featured); setCombo(p.combo); setAvail(p.variants[0]?.available ?? true);
-      if (p.variants.length > 1) { setMulti(true); setVars(p.variants); }
+      setF({ name: isNew ? p.name + " (copy)" : p.name, brand: p.brand, category: p.category, sub: p.sub, audience: p.audience, concentration: p.concentration, description: p.description, notes: p.notes, price: String(p.sizes[0]?.price ?? ""), label: p.sizes[0]?.label ?? "", longevity: p.longevity ? String(p.longevity) : "", projection: p.projection ? String(p.projection) : "", sillage: p.sillage ? String(p.sillage) : "", longevityGrade: p.longevityGrade, projectionGrade: p.projectionGrade, sillageGrade: p.sillageGrade });
+      setMode(p.ratingMode); setImgs(p.images.map((u) => ({ key: "e" + seq++, url: u, preview: u, status: "done" as const }))); setFeat(p.featured); setCombo(p.combo); setAvail(p.sizes[0]?.available ?? true);
+      if (p.sizes.length > 1) { setMulti(true); setVars(p.sizes); }
+      if (p.colours.length) { setHasCol(true); setCols(p.colours); }
       setState("ok");
     }).catch(() => setState("none"));
   }, [api, id, from, isNew]);
@@ -57,6 +58,7 @@ function Form() {
     let variants: Variant[];
     if (multi) { variants = vars.map((v, i) => ({ ...v, id: v.id || "v" + (i + 1), label: v.label.trim() })); if (!variants.length || variants.some((v) => !v.label || !isFinite(v.price) || v.price < 0)) e.price = "Give every size a name and a price (0 or more)."; }
     else { const p = Number(f.price); if (f.price.trim() === "" || !isFinite(p) || p < 0) e.price = "Enter a price in naira, for example 25000."; variants = [{ id: "v1", label: f.label.trim(), price: p, available: avail }]; }
+    if (hasCol && (!cols.length || cols.some((c) => !c.label.trim()))) e.colours = "Give every variant a name, or switch variants off.";
     if (f.description.length > 2000) e.description = "The description is too long. Keep it under 2000 characters.";
     if (f.notes.length > 1000) e.notes = "The notes are too long. Keep them under 1000 characters.";
     if (uploading) e.image = "Please wait for the photos to finish uploading.";
@@ -64,7 +66,7 @@ function Form() {
     setErr(e); if (Object.keys(e).length) return;
     setBusy(true);
     try {
-      await api("products", { method: "POST", body: { id: isNew ? undefined : id, ...f, ratingMode: mode, variants, images: imgs.map((i) => i.url), featured: feat, combo, status } });
+      await api("products", { method: "POST", body: { id: isNew ? undefined : id, ...f, ratingMode: mode, variants, colours: hasCol ? cols.map((c) => ({ ...c, label: c.label.trim() })) : [], images: imgs.map((i) => i.url), featured: feat, combo, status } });
       setDirty(false); refresh(); router.push("/admin/products");
     } catch (x) { setErr({ form: (x as Error).message }); setBusy(false); }
   };
@@ -102,6 +104,17 @@ function Form() {
               {vars.length > 1 && <button className="btn red sm fit" onClick={() => { setVars(vars.filter((_, k) => k !== i)); setDirty(true); }}><Trash2 size={16} />Remove</button>}</div>
           </div>))}
         <button className="btn o sm fit" onClick={() => { setVars([...vars, { id: "v" + (vars.length + 1) + (Date.now() % 1000), label: "", price: 0, available: true }]); setDirty(true); }}><Plus size={16} />Add another size</button><Fe k="price" />
+      </>)}
+      <label style={{ display: "flex", gap: 10, alignItems: "center", margin: "16px 0 4px", minHeight: 44 }}><input type="checkbox" checked={hasCol} onChange={(e) => { setHasCol(e.target.checked); setDirty(true); if (e.target.checked && !cols.length) setCols([{ id: "c1", label: "", available: true }]); }} style={{ width: 22, height: 22 }} />This perfume has variants (for example colours or versions)</label>
+      {hasCol && (<>
+        <div className="hint" style={{ marginBottom: 6 }}>List each variant and tick the ones that are available. Customers see them all, and the unavailable ones are shown as sold out. Leave this off for perfumes with no variants.</div>
+        {cols.map((c, i) => (
+          <div className="cardx" key={i}>
+            <label className="lab" htmlFor={"cv" + i}>Variant name</label><input id={"cv" + i} className="in-t" placeholder="Example: Red" value={c.label} onChange={(e) => { setCols(cols.map((x, k) => (k === i ? { ...x, label: e.target.value } : x))); setDirty(true); }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><label style={{ display: "flex", gap: 10, alignItems: "center", minHeight: 44 }}><input type="checkbox" checked={c.available} onChange={(e) => { setCols(cols.map((x, k) => (k === i ? { ...x, available: e.target.checked } : x))); setDirty(true); }} style={{ width: 22, height: 22 }} />Available</label>
+              <button className="btn red sm fit" onClick={() => { setCols(cols.filter((_, k) => k !== i)); setDirty(true); }}><Trash2 size={16} />Remove</button></div>
+          </div>))}
+        <button className="btn o sm fit" onClick={() => { setCols([...cols, { id: "c" + (cols.length + 1) + (Date.now() % 1000), label: "", available: true }]); setDirty(true); }}><Plus size={16} />Add another variant</button><Fe k="colours" />
       </>)}
       <label className="lab" htmlFor="ds">Description</label><textarea id="ds" value={f.description} onChange={(e) => set("description", e.target.value)} /><div className="hint">Press Enter to start a new line. Line breaks are kept on the store.</div><Fe k="description" />
       <label className="lab" htmlFor="fn">Fragrance notes (optional)</label>
